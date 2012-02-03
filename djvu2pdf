@@ -1,0 +1,33 @@
+#!/bin/bash
+# This script depends on djvulibre and libtiff-tools packages
+
+[ $# -le 0 ] && echo "Usage: djvu2pdf FILE..." && exit 1
+
+for f in "$@"
+do
+    if [ -f "$f" ]; then
+        echo "Converting file: $f"
+
+        tmp_file=$(mktemp)
+
+        ddjvu -format=tiff "$f" $tmp_file
+
+        if [ $? -ne 0 ]; then
+            rm $tmp_file
+            echo "Failed to convert $f"
+            continue
+        fi
+
+        tiff2pdf -z -o "${f%.*}.pdf" $tmp_file
+
+        if [ $? -ne 0 ]; then
+            rm $tmp_file
+            echo "Failed to convert $f"
+            continue
+        fi
+
+        rm $tmp_file
+    else
+        echo "'$f' is not a valid file"
+    fi
+done
